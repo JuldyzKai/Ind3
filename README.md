@@ -13,6 +13,7 @@
             --background: #ecf0f1; /* Светлый фон */
             --text: #2c3e50; /* Темный текст */
             --card: #ffffff; /* Белый */
+            --key: #9b59b6; /* Фиолетовый для кнопки ключа */
         }
 
         body {
@@ -133,6 +134,13 @@
             z-index: 100;
         }
 
+        .item.show-answer {
+            background-color: var(--key);
+            color: white;
+            border-color: var(--key);
+            box-shadow: 0 0 0 3px rgba(155, 89, 182, 0.5);
+        }
+
         .controls {
             display: flex;
             justify-content: center;
@@ -172,6 +180,10 @@
             background-color: var(--incorrect);
         }
 
+        .btn-key {
+            background-color: var(--key);
+        }
+
         .feedback {
             text-align: center;
             margin-top: 20px;
@@ -205,6 +217,16 @@
             h1 {
                 font-size: 1.8rem;
             }
+            
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .btn {
+                width: 100%;
+                max-width: 250px;
+            }
         }
 
         /* Анимации */
@@ -226,6 +248,15 @@
 
         .shake {
             animation: shake 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
         }
     </style>
 </head>
@@ -258,6 +289,7 @@
             <div class="controls">
                 <button class="btn btn-check" id="check-btn">Тексеру</button>
                 <button class="btn btn-reset" id="reset-btn">Қалпына келтіру</button>
+                <button class="btn btn-key" id="key-btn">Кілт</button>
             </div>
             
             <div class="feedback" id="feedback"></div>
@@ -488,6 +520,68 @@
             feedback.style.display = 'block';
         }
 
+        // Показать правильные ответы
+        function showAnswers() {
+            const eventsColumn = document.getElementById('events-column');
+            const descriptionsColumn = document.getElementById('descriptions-column');
+            const feedback = document.getElementById('feedback');
+            
+            // Удаляем все классы перед показом ответов
+            document.querySelectorAll('.item').forEach(item => {
+                item.classList.remove('correct', 'incorrect', 'show-answer');
+            });
+            
+            // Создаем временные массивы для элементов
+            const eventItems = Array.from(eventsColumn.children);
+            const descItems = Array.from(descriptionsColumn.children);
+            
+            // Для каждого элемента в левой колонке
+            eventItems.forEach(eventItem => {
+                const eventText = eventItem.textContent;
+                
+                // Находим правильное описание
+                const correctPair = gameData.find(item => 
+                    item.event === eventText || item.description === eventText
+                );
+                
+                if (correctPair) {
+                    // Находим индекс правильного описания в правой колонке
+                    const correctDescIndex = descItems.findIndex(descItem => 
+                        descItem.textContent === correctPair.description || 
+                        descItem.textContent === correctPair.event
+                    );
+                    
+                    // Если нашли правильное описание в правой колонке
+                    if (correctDescIndex !== -1) {
+                        // Подсвечиваем пару
+                        eventItem.classList.add('show-answer', 'fade-in');
+                        descItems[correctDescIndex].classList.add('show-answer', 'fade-in');
+                        
+                        // Перемещаем описание напротив события
+                        if (Array.from(eventsColumn.children).indexOf(eventItem) !== correctDescIndex) {
+                            const correctDesc = descItems[correctDescIndex];
+                            const currentIndex = Array.from(descriptionsColumn.children).indexOf(correctDesc);
+                            const targetIndex = Array.from(eventsColumn.children).indexOf(eventItem);
+                            
+                            if (targetIndex < descriptionsColumn.children.length) {
+                                descriptionsColumn.insertBefore(
+                                    correctDesc, 
+                                    descriptionsColumn.children[targetIndex]
+                                );
+                            } else {
+                                descriptionsColumn.appendChild(correctDesc);
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Показываем сообщение
+            feedback.textContent = 'Дұрыс жауаптар көрсетілді!';
+            feedback.className = 'feedback correct';
+            feedback.style.display = 'block';
+        }
+
         // Сброс игры
         function resetGame() {
             initGame();
@@ -500,94 +594,7 @@
             // Кнопки
             document.getElementById('check-btn').addEventListener('click', checkAnswers);
             document.getElementById('reset-btn').addEventListener('click', resetGame);
-        });
-    </script>
- <button class="btn show-answers-btn" id="show-answers-btn">Дұрыс жауаптарды көрсету</button>
-        
-        <div class="answers-table" id="answers-table">
-            <h3>«Қыз Жібек» жырындағы оқиғалардың дұрыс реті</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>№</th>
-                        <th>Оқиға</th>
-                        <th>Сипаттама</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>1</td>
-                        <td>Төлеген түс көріп, өзі үшін жаратылған қыз бар екенін біледі</td>
-                        <td>Төлегеннің түс көруі мен ел аралап қыз іздеуі</td>
-                    </tr>
-                    <tr>
-                        <td>2</td>
-                        <td>Ел аралап, қыз іздейді, бірақ ешқайсысын ұнатпайды</td>
-                        <td>Төлегеннің жорыққа шығуы</td>
-                    </tr>
-                    <tr>
-                        <td>3</td>
-                        <td>Саудагер шал Жайық бойында сұлулар барын айтады</td>
-                        <td>Саудагер шалдың Жайықтағы қыз туралы айтуы</td>
-                    </tr>
-                    <tr>
-                        <td>4</td>
-                        <td>Төлеген шешесіне қарамай жорыққа шығады</td>
-                        <td>Анасының қарсы болуы, қоштасу сәті</td>
-                    </tr>
-                    <tr>
-                        <td>5</td>
-                        <td>Жүздеген қызды көреді, ешқайсысын таңдамаған соң Қаршыға кездеседі</td>
-                        <td>Қыз таңдауы (жүздеген қыздарды көруі)</td>
-                    </tr>
-                    <tr>
-                        <td>6</td>
-                        <td>Қаршыға Төлегенді Жібекпен таныстырады</td>
-                        <td>Қаршыға арқылы Қыз Жібекті көруі</td>
-                    </tr>
-                    <tr>
-                        <td>7</td>
-                        <td>Төлеген мен Жібек өлеңмен сөйлесіп, тіл табысады</td>
-                        <td>Жібек пен Төлегеннің танысуы, сөз алмасуы</td>
-                    </tr>
-                    <tr>
-                        <td>8</td>
-                        <td>Төлеген Сырлыбай ханға барып құда түседі</td>
-                        <td>Құда түсу, той</td>
-                    </tr>
-                    <tr>
-                        <td>9</td>
-                        <td>Той болады, Төлеген еліне қайтады</td>
-                        <td>Бекежан мен басқа жігіттердің қызғануы</td>
-                    </tr>
-                    <tr>
-                        <td>10</td>
-                        <td>Бекежан мен шекті жігіттері Төлегенге қастандық жасайды</td>
-                        <td>Қастандық пен Төлегеннің өлімі</td>
-                    </tr>
-                    <tr>
-                        <td>11</td>
-                        <td>Төлеген мерт болады, Жібек жоқтау айтады</td>
-                        <td>Жібектің зары</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <script>
-        // Бұрынғы барлық скриптер сақталады
-        
-        // Дұрыс жауаптарды көрсету функциясын қосыңыз
-        document.getElementById('show-answers-btn').addEventListener('click', function() {
-            const answersTable = document.getElementById('answers-table');
-            if (answersTable.style.display === 'none' || !answersTable.style.display) {
-                answersTable.style.display = 'block';
-                this.textContent = 'Дұрыс жауаптарды жасыру';
-            } else {
-                answersTable.style.display = 'none';
-                this.textContent = 'Дұрыс жауаптарды көрсету';
-            }
+            document.getElementById('key-btn').addEventListener('click', showAnswers);
         });
     </script>
 </body>
